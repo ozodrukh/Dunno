@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    >
+
+  <androidx.emoji.widget.EmojiTextView
+      android:id="@+id/country_flag"
+      android:layout_width="40dp"
+      android:layout_height="40dp"
+      android:layout_centerVertical="true"
+      android:layout_marginLeft="16dp"
+      android:textSize="24sp"
+      android:gravity="center"
+      tools:text="🇺🇸"
+      />
+
+  <TextView
+      android:id="@+id/title"
+      style="@style/TextAppearance.AppCompat.Body1"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_marginLeft="72dp"
+      android:layout_marginTop="16dp"
+      android:textSize="16sp"
+      android:textStyle="bold"
+      tools:text="USD"
+      />
+
+  <TextView
+      android:id="@+id/subtitle"
+      style="@style/TextAppearance.AppCompat.Body1"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_below="@id/title"
+      android:layout_alignLeft="@id/title"
+      android:layout_marginTop="4dp"
+      android:layout_marginBottom="16dp"
+      android:textColor="@color/subtitle_text_color"
+      android:textSize="14sp"
+      tools:text="US Dollar"
+      />
+
+
+  <EditText
+      android:id="@+id/rate"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_alignParentRight="true"
+      android:layout_centerInParent="true"
+      android:layout_marginRight="16dp"
+      android:textStyle="bold"
+      android:hint="0"
+      android:textSize="20sp"
+      android:digits="1234567890."
+      android:inputType="numberSigned|numberDecimal"
+      tools:text="1354.40"
+      />
+
+</RelativeLayout>

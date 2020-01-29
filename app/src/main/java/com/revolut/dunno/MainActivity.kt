@@ -1,0 +1,109 @@
+package com.revolut.dunno
+
+import androidx.appcompat.app.AppCompatActivity
+import android.os.Bundle
+import android.view.View
+import android.widget.ProgressBar
+import androidx.emoji.bundled.BundledEmojiCompatConfig
+import androidx.emoji.text.EmojiCompat
+import androidx.lifecycle.Observer
+import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView.ViewHolder
+import com.revolut.dunno.CurrencyAdapter.CurrencyViewHolder
+import java.util.*
+
+class MainActivity : AppCompatActivity() {
+  private val container by lazy { findViewById<RecyclerView>(R.id.container) }
+  private val circularProgress by lazy { findViewById<ProgressBar>(R.id.progress_circular) }
+
+  private lateinit var currencyRefresher: CurrencyRatesRefresher
+  private var skipSelfInteraction = false
+
+  private val userInteractWithInput = { value: Double ->
+    if (!skipSelfInteraction) {
+      refreshRatesOnVisibleRows(currencyRefresher.currentRates)
+    } else {
+      skipSelfInteraction = false
+    }
+  }
+
+  private val onActiveRowChanged = { target: ViewHolder ->
+    currencyRefresher.setCurrency(adapter.currencies[target.adapterPosition])
+
+    adapter.moveRowToTop(target.adapterPosition)
+  }
+
+  private var defaultCurrency = Currency.getInstance(Locale.US)
+      .currencyCode
+
+  private val adapter = CurrencyAdapter(defaultCurrency)
+
+  override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+    // was a bit lazy to make Application class for emoji initializing
+    EmojiCompat.init(BundledEmojiCompatConfig(this))
+
+    setContentView(R.layout.activity_main)
+
+    container.adapter = adapter
+
+    if (!(::currencyRefresher.isInitialized)) {
+      setupCurrencyRefresher(CurrencyRatesRefresher(NetworkModule.retrofit))
+    }
+  }
+
+  fun setupCurrencyRefresher(refresher: CurrencyRatesRefresher) {
+    if (::currencyRefresher.isInitialized) {
+      currencyRefresher.liveRates.removeObservers(this)
+      currencyRefresher.stop()
+    }
+
+    currencyRefresher = refresher
+    currencyRefresher.setCurrency(defaultCurrency)
+    currencyRefresher.liveRates.observe(this, Observer { rates ->
+      adapter.currencyRates = rates
+
+      if (adapter.currencies.isEmpty()) {
+        adapter.addCurrencies(rates)
+
+        circularProgress.visibility = View.GONE
+      }
+
+      refreshRatesOnVisibleRows(rates)
+    })
+  }
+
+  private fun refreshRatesOnVisibleRows(rates: CurrencyRates) {
+    container.visibleRows<CurrencyViewHolder> { vh ->
+
+      // in order not to loose focus & state on active view, we skip handling it
+      if (adapter.currencies[vh.adapterPosition] == rates.base) {
+        return@visibleRows
+      }
+
+      val target = currencyRefresher.currentCurrency
+
+      skipSelfInteraction = true
+
+      vh.setCurrencyValue(
+          adapter.value * rates.ratio(target, adapter.currencies[vh.adapterPosition])
+      )
+    }
+  }
+
+  override fun onStart() {
+    super.onStart()
+    adapter.onUserEditInput = userInteractWithInput
+    adapter.onFocusChange = onActiveRowChanged
+
+    currencyRefresher.start()
+  }
+
+  override fun onStop() {
+    super.onStop()
+    adapter.onUserEditInput = null
+    adapter.onFocusChange = null
+
+    currencyRefresher.stop()
+  }
+}

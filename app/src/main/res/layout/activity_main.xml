@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/white"
+    android:orientation="vertical"
+    tools:context=".MainActivity"
+    >
+
+  <TextView
+      android:id="@+id/title"
+      android:layout_width="match_parent"
+      android:layout_height="56dp"
+      android:layout_marginLeft="72dp"
+      android:gravity="center_vertical"
+      android:text="@string/rates_title"
+      android:textColor="@color/rates_title_color"
+      android:textSize="20sp"
+      android:textStyle="bold"
+      />
+
+  <ProgressBar
+      android:id="@+id/progress_circular"
+      android:layout_width="56dp"
+      android:layout_height="56dp"
+      android:padding="16dp"
+      android:layout_centerInParent="true"
+      />
+
+  <androidx.recyclerview.widget.RecyclerView
+      android:id="@+id/container"
+      android:layout_below="@id/title"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+      tools:itemCount="4"
+      tools:listitem="@layout/item_rate_view"
+      />
+
+</RelativeLayout>
