@@ -1,6 +1,8 @@
 package com.revolut.dunno
 
 import android.text.Editable
+import android.text.InputFilter
+import android.text.Spanned
 import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
@@ -15,10 +17,24 @@ import com.revolut.dunno.CurrencyAdapter.CurrencyViewHolder
 class CurrencyAdapter(private var primaryCurrency: String) : Adapter<CurrencyViewHolder>() {
   var currencyRates: CurrencyRates = CurrencyRatesRefresher.EMPTY_CURRENCY_RATE
   var currencies: List<String> = emptyList()
-  var value = 100.0
+  var primaryCurrencyValue = 100.0
 
   var onUserEditInput: ((Double) -> Unit)? = null
   var onFocusChange: ((ViewHolder) -> Unit)? = null
+
+  private val filters = arrayOf(object : InputFilter {
+    override fun filter(source: CharSequence, start: Int, end: Int,
+      dest: Spanned, dstart: Int, dend: Int): CharSequence {
+
+      if (source == "0" && dest.length == 1) {
+        dest.toString().toDoubleOrNull()?.let { value ->
+          return if (value == 0.0) "" else source
+        }
+      }
+
+      return source
+    }
+  })
 
   private val inputObserver = object : TextWatcher {
     override fun afterTextChanged(s: Editable?) {
@@ -31,9 +47,8 @@ class CurrencyAdapter(private var primaryCurrency: String) : Adapter<CurrencyVie
 
     override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
       if (s != null) {
-        value = s.toString().toDoubleOrNull() ?: 0.0
-
-        onUserEditInput?.invoke(value)
+        primaryCurrencyValue = getAmount(s)
+        onUserEditInput?.invoke(primaryCurrencyValue)
       }
     }
   }
@@ -44,6 +59,10 @@ class CurrencyAdapter(private var primaryCurrency: String) : Adapter<CurrencyVie
 
       notifyItemMoved(fromPosition, 0)
     }
+  }
+
+  fun getAmount(value: CharSequence): Double {
+    return value.toString().toDoubleOrNull() ?: 0.0
   }
 
   fun addCurrencies(updated: CurrencyRates) {
@@ -62,9 +81,11 @@ class CurrencyAdapter(private var primaryCurrency: String) : Adapter<CurrencyVie
 
   override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CurrencyViewHolder {
     return CurrencyViewHolder(
-        LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_rate_view, parent, false)
-    )
+        LayoutInflater.from(parent.context).inflate(R.layout.item_rate_view, parent, false)
+    ).apply {
+
+      rate.filters = filters
+    }
   }
 
   override fun getItemCount(): Int {
@@ -74,9 +95,8 @@ class CurrencyAdapter(private var primaryCurrency: String) : Adapter<CurrencyVie
   override fun onBindViewHolder(holder: CurrencyViewHolder, position: Int) {
     holder.setCurrency(currencies[position])
     holder.setCurrencyValue(
-        value * currencyRates.ratio(
-            primaryCurrency,
-            currencies[position]
+        primaryCurrencyValue * currencyRates.ratio(
+            primaryCurrency, currencies[position]
         )
     )
   }

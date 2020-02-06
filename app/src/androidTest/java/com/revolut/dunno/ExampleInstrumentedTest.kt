@@ -1,10 +1,15 @@
 package com.revolut.dunno
 
+import android.content.Intent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.TextView
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
 import androidx.test.espresso.Espresso.onData
 import androidx.test.espresso.Espresso.onView
@@ -18,6 +23,8 @@ import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.rule.ActivityTestRule
+import androidx.test.runner.intercepting.SingleActivityFactory
+import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.doAnswer
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.whenever
@@ -44,48 +51,62 @@ import org.mockito.Mockito.doNothing
 class ExampleInstrumentedTest {
 
   @get:Rule
-  val rule = ActivityTestRule<MainActivity>(MainActivity::class.java, false, true)
+  val rule = ActivityTestRule<MainActivity>(object :
+    SingleActivityFactory<MainActivity>(MainActivity::class.java) {
+    override fun create(intent: Intent?): MainActivity {
+      val activity = MainActivity()
+      activity.factory = object : ViewModelProvider.NewInstanceFactory() {
+        override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+          return refresher as T
+        }
+      }
+      return activity
+    }
+  }, false, true)
 
   private val rates = CurrencyRates(
       "USD", "", mapOf("EUR" to 0.83)
   )
   private var currentCurrency: String = rates.base
   private val mockLiveData = MutableLiveData<CurrencyRates>()
-  private val refresher: CurrencyRatesRefresher = mock {
-    on { liveRates }.thenReturn(mockLiveData)
-    on { currentRates }.thenReturn(rates)
-    on { currentCurrency }.thenReturn(currentCurrency)
+  private val refresher: LiveRatesViewModel = mock {
+    on { rates }.thenReturn(rates)
+    on { currency }.thenReturn(currentCurrency)
 
     doAnswer {
       currentCurrency = it.arguments[0] as String
     }.`when`(mock)
-        .setCurrency(anyString())
+        .currency = anyString()
+
+    doAnswer {
+      mockLiveData.observe(it.arguments[0] as LifecycleOwner, it.arguments[1] as Observer<in CurrencyRates>)
+    }.`when`(mock).listen(any(), any())
   }
 
   @Before
   fun init() {
     mockLiveData.postValue(rates)
-
-    rule.runOnUiThread {
-      (rule.activity as MainActivity).setupCurrencyRefresher(refresher)
-    }
   }
 
   @Test
   fun test() {
     onView(withId(R.id.container))
-        .perform(actionOnHolderItem(FindRowWithTitle(Matchers.equalTo("EUR")), object : ViewAction {
-          override fun getDescription(): String = "EditText typing"
+        .perform(
+            actionOnHolderItem(
+                FindRowWithTitle(Matchers.equalTo("EUR")),
+                object : ViewAction {
+                  override fun getDescription(): String = "EditText typing"
 
-          override fun getConstraints(): Matcher<View> =
-            allOf(isAssignableFrom(EditText::class.java), isDisplayed())
+                  override fun getConstraints(): Matcher<View> =
+                    allOf(isAssignableFrom(EditText::class.java), isDisplayed())
 
-          override fun perform(uiController: UiController?, view: View) {
-            val t = (view as ViewGroup).getChildAt(3) as EditText
-            t.requestFocus()
-            t.setText("100")
-          }
-        }))
+                  override fun perform(uiController: UiController?, view: View) {
+                    val t = (view as ViewGroup).getChildAt(3) as EditText
+                    t.requestFocus()
+                    t.setText("100")
+                  }
+                })
+        )
         .check(matches(allOf(object : TypeSafeMatcher<View>() {
           val holderMatcher = FindRowWithTitle(Matchers.equalTo("EUR"))
 
@@ -135,7 +156,7 @@ class ExampleInstrumentedTest {
     }
 
     override fun matchesSafely(item: RecyclerView.ViewHolder): Boolean {
-      if(item is CurrencyViewHolder) {
+      if (item is CurrencyViewHolder) {
         return text.matches(item.currencyName)
       } else {
         return false

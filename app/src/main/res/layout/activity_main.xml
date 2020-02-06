@@ -9,16 +9,15 @@
     tools:context=".MainActivity"
     >
 
-  <TextView
-      android:id="@+id/title"
+  <androidx.appcompat.widget.Toolbar
+      android:id="@+id/toolbar"
       android:layout_width="match_parent"
       android:layout_height="56dp"
-      android:layout_marginLeft="72dp"
-      android:gravity="center_vertical"
-      android:text="@string/rates_title"
-      android:textColor="@color/rates_title_color"
-      android:textSize="20sp"
-      android:textStyle="bold"
+      app:title="@string/rates_title"
+      app:titleMarginStart="72dp"
+      app:subtitleTextColor="#FFC107"
+      app:subtitleTextAppearance="@style/TextAppearance.AppCompat.Caption"
+      tools:subtitle="@string/offline_rates"
       />
 
   <ProgressBar
@@ -27,11 +26,12 @@
       android:layout_height="56dp"
       android:padding="16dp"
       android:layout_centerInParent="true"
+      style="@style/Widget.AppCompat.ProgressBar"
       />
 
   <androidx.recyclerview.widget.RecyclerView
       android:id="@+id/container"
-      android:layout_below="@id/title"
+      android:layout_below="@id/toolbar"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
       app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"

@@ -1,4 +1,5 @@
 <resources>
-    <string name="app_name">Dunno</string>
+  <string name="app_name">Dunno</string>
   <string name="rates_title">Rates</string>
+  <string name="offline_rates">You are currently offline, rates not updated</string>
 </resources>

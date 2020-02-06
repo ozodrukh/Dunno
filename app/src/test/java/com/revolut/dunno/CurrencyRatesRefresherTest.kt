@@ -34,7 +34,7 @@ class CurrencyRatesRefresherTest {
 
   @Before
   fun init() {
-    currencyRefresher.currentCurrency = "EUR"
+    currencyRefresher.setCurrency("EUR")
   }
 
   @Test
@@ -115,7 +115,7 @@ class CurrencyRatesRefresherTest {
     }
 
     currencyRefresher.liveRates.observeForever(observer)
-    currencyRefresher.currentCurrency = "USD"
+    currencyRefresher.setCurrency("USD")
 
     try {
       assertTrue(latch.await(5, SECONDS))

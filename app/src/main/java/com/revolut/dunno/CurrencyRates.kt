@@ -6,6 +6,8 @@ data class CurrencyRates(
   val rates: Map<String, Double>
 ) {
 
+  val offline: Boolean = "offline".equals(date)
+
   operator fun get(currency: String): Double {
     return rates[currency] ?: 0.0
   }
